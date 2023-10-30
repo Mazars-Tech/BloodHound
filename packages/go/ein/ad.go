@@ -17,13 +17,13 @@
 package ein
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/specterops/bloodhound/analysis"
 	"github.com/specterops/bloodhound/dawgs/graph"
 	"github.com/specterops/bloodhound/graphschema/ad"
 	"github.com/specterops/bloodhound/log"
+	"github.com/specterops/bloodhound/slices"
 )
 
 var unenforcedDomainProperties = make(map[string]map[string]any) // key: objectid, value: {propertyKey: propertyValue}
@@ -324,10 +324,18 @@ func ParseDomainMiscData(domains []Domain) []IngestibleNode {
 			if val, err := linkTypes[index].LDAPSigning["RequiresLDAPClientSigning"]; err != false {
 				domainProperties[linkType]["requiresLDAPClientSigning"] = val
 			}
+			if val, err := linkTypes[index].LDAPSigning["LDAPEnforceChannelBinding"]; err != false {
+				domainProperties[linkType]["LDAPEnforceChannelBinding"] = val
+			}
 
 			// LM authentication level
 			if val, err := linkTypes[index].LMAuthenticationLevel["LmCompatibilityLevel"]; err != false {
 				domainProperties[linkType]["lmCompatibilityLevel"] = val
+			}
+
+			// MSCache
+			if val, err := linkTypes[index].MSCache["CachedLogonsCount"]; err != false {
+				domainProperties[linkType]["cachedLogonsCount"] = val
 			}
 		}
 
@@ -354,7 +362,6 @@ func ParseDomainMiscData(domains []Domain) []IngestibleNode {
 
 		}
 	}
-
 	return ingestibleNodes
 
 }
@@ -364,28 +371,14 @@ func ParseOUMiscData(ous []OU) []IngestibleNode {
 	ingestibleNodes := make([]IngestibleNode, 0)
 	var blockInheritanceComputers []string
 	var propertiesComputers []map[string]map[string]any // key: objectid, value: { propKey: propValue }
-	foundInUnenforcedDomainProperties := false
+	foundInCurrentProperties := false
+
 	for _, ou := range ous {
 		// add GPOChanges properties to the affected computers
 		blockInheritance := ou.GPOChanges.BlockInheritance
 		ouProperties := map[string]map[string]any{"unenforced": {}, "enforced": {}}
 		linkTypes := [2]LinkType{ou.GPOChanges.Unenforced, ou.GPOChanges.Enforced}
 		foundInEnforcedDomainProperties := false
-
-		props := make(map[string]any, 0)
-
-		for _, target := range ou.GPOChanges.LocalAdmins {
-			props["localadmins"] = target.ObjectIdentifier
-		}
-		for _, target := range ou.GPOChanges.RemoteDesktopUsers {
-			props["remotedesktopusers"] = target.ObjectIdentifier
-		}
-		for _, target := range ou.GPOChanges.DcomUsers {
-			props["dcomusers"] = target.ObjectIdentifier
-		}
-		for _, target := range ou.GPOChanges.PSRemoteUsers {
-			props["psremoteusers"] = target.ObjectIdentifier
-		}
 
 		for index, linkType := range [2]string{"unenforced", "enforced"} {
 			// Password policies
@@ -440,10 +433,18 @@ func ParseOUMiscData(ous []OU) []IngestibleNode {
 			if val, err := linkTypes[index].LDAPSigning["RequiresLDAPClientSigning"]; err != false {
 				ouProperties[linkType]["requiresLDAPClientSigning"] = val
 			}
+			if val, err := linkTypes[index].LDAPSigning["LDAPEnforceChannelBinding"]; err != false {
+				ouProperties[linkType]["LDAPEnforceChannelBinding"] = val
+			}
 
 			// LM authentication level
 			if val, err := linkTypes[index].LMAuthenticationLevel["LmCompatibilityLevel"]; err != false {
 				ouProperties[linkType]["lmCompatibilityLevel"] = val
+			}
+
+			// MSCache
+			if val, err := linkTypes[index].MSCache["CachedLogonsCount"]; err != false {
+				ouProperties[linkType]["cachedLogonsCount"] = val
 			}
 		}
 
@@ -487,7 +488,7 @@ func ParseOUMiscData(ous []OU) []IngestibleNode {
 
 				// create, if the computer has not already been affected by properties
 				if !foundInPropertiesComputers {
-					propertiesComputers = append(propertiesComputers, map[string]map[string]any{computerIdentifier: (ouProperties["unenforced"])})
+					propertiesComputers = append(propertiesComputers, map[string]map[string]any{computerIdentifier: copyMap(ouProperties["unenforced"])})
 				}
 
 				if blockInheritance {
@@ -524,7 +525,7 @@ func ParseOUMiscData(ous []OU) []IngestibleNode {
 
 			// create if the computer has not already been affected by properties
 			if !foundInPropertiesComputers {
-				propertiesComputers = append(propertiesComputers, map[string]map[string]any{computerIdentifier: (ouProperties["enforced"])})
+				propertiesComputers = append(propertiesComputers, map[string]map[string]any{computerIdentifier: copyMap(ouProperties["enforced"])})
 			}
 		}
 	}
@@ -535,14 +536,14 @@ func ParseOUMiscData(ous []OU) []IngestibleNode {
 			for computerId, properties := range propertiesComputer {
 				if domainComputerId == computerId {
 					for unenforcedDomainKey, unenforcedDomainValue := range unenforcedDomainProps {
-						foundInUnenforcedDomainProperties = false
+						foundInCurrentProperties = false
 						for propKey := range properties {
 							if propKey == unenforcedDomainKey {
-								foundInUnenforcedDomainProperties = true
+								foundInCurrentProperties = true
 								break
 							}
 						}
-						if !foundInUnenforcedDomainProperties {
+						if !foundInCurrentProperties && !slices.Contains(enforcedDomainProperties[computerId], unenforcedDomainKey) {
 							properties[unenforcedDomainKey] = unenforcedDomainValue
 						}
 					}
