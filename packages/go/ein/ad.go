@@ -260,7 +260,7 @@ func ParseDomainTrusts(domain Domain) ParsedDomainTrustData {
 	return parsedData
 }
 
-// ParseDomainMiscData parses GPOChanges data and manages prioritization of the policies
+// ParseDomainMiscData parses misc data applied at the domain level
 func ParseDomainMiscData(domains []Domain) []IngestibleNode {
 	unenforcedDomainProperties = make(map[string]map[string]any)
 	enforcedDomainProperties = make(map[string][]string)
@@ -268,6 +268,7 @@ func ParseDomainMiscData(domains []Domain) []IngestibleNode {
 	ingestibleNodes := make([]IngestibleNode, 0)
 	for _, domain := range domains {
 
+		// GPOChanges
 		domainProperties := map[string]map[string]any{"unenforced": {}, "enforced": {}}
 		linkTypes := [2]LinkType{domain.GPOChanges.Unenforced, domain.GPOChanges.Enforced}
 
@@ -359,7 +360,6 @@ func ParseDomainMiscData(domains []Domain) []IngestibleNode {
 					enforcedDomainProperties[computerId] = append(enforcedDomainProperties[computerId], key)
 				}
 			}
-
 		}
 	}
 	return ingestibleNodes
