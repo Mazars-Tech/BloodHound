@@ -1,0 +1,1 @@
+import{j as s,p as x,a,s as e}from"./index-a584ef0b.js";const h=({title:r,children:i,...n})=>s.jsx(x,{maxWidth:"xl",...n,children:s.jsxs(a,{py:2,children:[r&&s.jsx(a,{mb:2,children:s.jsx(e,{variant:"h1",children:r})}),i]})});export{h as P};

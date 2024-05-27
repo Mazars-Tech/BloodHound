@@ -1,0 +1,183 @@
+import * as axios from 'axios';
+export type RequestOptions = axios.AxiosRequestConfig;
+export interface CreateAssetGroupRequest {
+    name: string;
+    tag: string;
+}
+export interface UpdateAssetGroupRequest {
+    name: string;
+}
+export interface CreateAssetGroupSelectorRequest {
+    node_label: string;
+    selector_name: string;
+    sid: string;
+}
+export interface CreateSharpHoundClientRequest {
+    domain_controller: string;
+    name: string;
+    events?: any[];
+    type: 'sharphound';
+}
+export interface CreateAzureHoundClientRequest {
+    name: string;
+    events?: any[];
+    type: 'azurehound';
+}
+export interface UpdateSharpHoundClientRequest {
+    domain_controller: string;
+    name: string;
+}
+export interface UpdateAzureHoundClientRequest {
+    name: string;
+}
+export interface CreateScheduledJobRequest {
+    session_collection: boolean;
+    ad_structure_collection: boolean;
+    local_group_collection: boolean;
+    domain_controller?: string;
+    ous: string[];
+    domains: string[];
+    all_trusted_domains: boolean;
+}
+export interface ClientStartJobRequest {
+    id: number;
+    start_time: string;
+}
+export interface ClientEndJobRequest {
+    end_time: string;
+    id: number;
+    log: string;
+}
+export interface CreateSharpHoundEventRequest {
+    client_id: string;
+    rrule: string;
+    session_collection: boolean;
+    ad_structure_collection: boolean;
+    local_group_collection: boolean;
+    ous: string[];
+    domains: string[];
+    all_trusted_domains: boolean;
+}
+export interface CreateAzureHoundEventRequest {
+    client_id: string;
+    rrule: string;
+}
+export interface UpdateSharpHoundEventRequest {
+    client_id: string;
+    rrule: string;
+    session_collection: boolean;
+    ad_structure_collection: boolean;
+    local_group_collection: boolean;
+    ous: string[];
+    domains: string[];
+    all_trusted_domains: boolean;
+}
+export interface UpdateAzureHoundEventRequest {
+    client_id: string;
+    rrule: string;
+}
+export interface PutUserAuthSecretRequest {
+    secret: string;
+    needs_password_reset: boolean;
+}
+export interface LoginRequest {
+    login_method: string;
+    secret: string;
+    username: string;
+    otp?: string;
+}
+export interface LoginResponse {
+    data: {
+        user_id: string;
+        auth_expired: boolean;
+        eula_accepted: boolean;
+        session_token: string;
+        user_name: string;
+    };
+}
+export interface GetCollectorsResponse {
+    data: {
+        latest: string;
+        versions: {
+            version: string;
+            sha256sum: string;
+            deprecated: boolean;
+        }[];
+    };
+}
+export type PostureRequest = {
+    from: string;
+    to: string;
+    domain_sid?: string;
+    sort_by?: string;
+};
+export type RiskDetailsRequest = {
+    finding: string;
+    skip: number;
+    limit: number;
+    Accepted?: string;
+};
+export type GraphNode = {
+    label: string;
+    kind: string;
+    objectId: string;
+    lastSeen: string;
+    isTierZero: boolean;
+    descendent_count?: number | null;
+};
+export type GraphNodes = Record<string, GraphNode>;
+export type GraphEdge = {
+    source: string;
+    target: string;
+    label: string;
+    kind: string;
+    lastSeen: string;
+    impactPercent?: number;
+    exploreGraphId?: string;
+    data?: Record<string, any>;
+};
+export type GraphEdges = GraphEdge[];
+export type GraphData = {
+    nodes: GraphNodes;
+    edges: GraphEdges;
+};
+export type GraphResponse = {
+    data: GraphData;
+};
+export type StyledGraphNode = {
+    color: string;
+    data: Record<string, any>;
+    border: {
+        color: string;
+    };
+    fontIcon: {
+        text: string;
+    };
+    label: {
+        backgroundColor: string;
+        center: boolean;
+        fontSize: number;
+        text: string;
+    };
+    size: number;
+};
+export type StyledGraphEdge = {
+    color: string;
+    data: Record<string, any>;
+    end1?: {
+        arrow: boolean;
+    };
+    end2?: {
+        arrow: boolean;
+    };
+    id1: string;
+    id2: string;
+    label: {
+        text: string;
+    };
+};
+export type FlatGraphResponse = Record<string, StyledGraphNode | StyledGraphEdge>;
+export interface CreateUserQueryRequest {
+    name: string;
+    query: string;
+}
